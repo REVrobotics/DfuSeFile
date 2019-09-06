@@ -37,16 +37,18 @@ namespace dfuse {
 
 class DFUTarget {
 public:
+    uint32_t Address() { return m_prefix.Address; }
+    int Size() { return m_prefix.Size; }
 private:
     friend std::istream & operator >> (std::istream &in,  DFUTarget &obj) {
-        //obj.m_valid = false;
         in >> obj.m_prefix;
 
+        // We will stream in the elements later, save the stream location
         obj.m_elements.reserve(obj.m_prefix.Size);
-
         in.read((char*)obj.m_elements.data(), obj.m_prefix.Size);
 
-        //obj.m_valid = true;
+        //in.seekg(obj.m_prefix.Size, std::ios_base::cur);
+
         return in;
     }
     struct Prefix {

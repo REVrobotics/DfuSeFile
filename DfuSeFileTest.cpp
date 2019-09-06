@@ -41,6 +41,9 @@ int main() {
             if (image) {
                 std::cout << "\t Id: " << image.Id() << " Name: " << image.Name() << " Size: " << image.Size() 
                           << " consisting of " << image.Elements().size() << " element(s)." << std::endl;
+                for (auto element : image.Elements()) {
+                    std::cout << "\t\t Element Address: 0x" << std::hex << element.Address() << " Size: " << element.Size() << std::endl;
+                }
             } else {
                 std::cout << "\t INVALID IMAGE!" << std::endl;
             }
