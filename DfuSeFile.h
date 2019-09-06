@@ -37,6 +37,7 @@ namespace dfuse {
 
 class DFUTarget {
 public:
+private:
     friend std::istream & operator >> (std::istream &in,  DFUTarget &obj) {
         //obj.m_valid = false;
         in >> obj.m_prefix;
@@ -48,7 +49,6 @@ public:
         //obj.m_valid = true;
         return in;
     }
-private:
     struct Prefix {
         uint32_t Address;
         uint32_t Size;
@@ -68,6 +68,15 @@ private:
 
 class DFUImage {
 public:
+    int Id() { return m_prefix.AltSetting; }
+    const char* Name() { return m_prefix.Name; }
+    int Size() { return m_prefix.Size; }
+    const std::vector<DFUTarget>& Elements() { return m_targets; }
+
+    operator bool() const {return m_valid;}
+    bool operator!() const {return !m_valid;}
+
+private:
     friend std::istream & operator >> (std::istream &in,  DFUImage &obj) {
         obj.m_valid = false;
         in >> obj.m_prefix;
@@ -88,11 +97,6 @@ public:
         obj.m_valid = true;
         return in;
     }
-
-    operator bool() const {return m_valid;}
-    bool operator!() const {return !m_valid;}
-
-private:
     struct Prefix {
         uint8_t Signature[6];
         uint8_t AltSetting;
@@ -155,21 +159,22 @@ public:
 
         dfuFile >> m_suffix;
 
-        // Check CRC
+        // TODO: Check CRC
         m_valid = true;
     };
 
-    uint32_t Write(std::string filename) {
-        return 0;
-    }
+    //uint32_t Write(std::string filename) {
+    //    return 0;
+    //}
 
     operator bool() const {return m_valid;}
     bool operator!() const {return !m_valid;}
 
     unsigned int FileFormatVersion() { return m_prefix.Version; }
     unsigned int Vendor() { return m_suffix.Vendor; }
-    unsigned int Product() { return m_suffix.DeviceVersion; }
+    unsigned int Product() { return m_suffix.Product; }
     unsigned int DeviceVersion() { return m_suffix.DeviceVersion; }
+    const std::vector<DFUImage>& Images() { return m_images; }
     uint32_t Crc() { return m_suffix.Crc32; }
 
 private:
@@ -187,11 +192,6 @@ private:
         //   B   uint8_t     version     1
         //   I   uint32_t    size        Size of the DFU file (not including suffix)
         //   B   uint8_t     targets     Number of targets
-        //friend std::ostream & operator << (std::ostream &out, const Prefix & obj)
-        //{
-        //    out << obj.mId << "\n" <<obj.mName<<"\n"<<obj.mPhoneNumber<<std::endl;
-        //    return out;
-        //}
         friend std::istream & operator >> (std::istream &in,  Prefix &obj) {
             in.read((char*)obj.Signature, 5);
             in.read((char*)&obj.Version,1);

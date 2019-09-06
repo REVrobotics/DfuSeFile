@@ -34,7 +34,17 @@ int main() {
     dfuse::DFUFile myFile("TestDFU.dfu");
 
     if (myFile) {
-        std::cout << "Success! Vendor: 0x" << std::hex << myFile.Vendor() << " Device Version: 0x" << std::hex << myFile.DeviceVersion() << std::endl;
+        std::cout << "Vendor: 0x" << std::hex << myFile.Vendor() << " Product: 0x" << std::hex << myFile.Product() << " Device Version: 0x" << std::hex << myFile.DeviceVersion() << std::endl;
+        std::cout << "Number of Targets: " << myFile.Images().size() << std::endl;
+
+        for (auto image : myFile.Images()) {
+            if (image) {
+                std::cout << "\t Id: " << image.Id() << " Name: " << image.Name() << " Size: " << image.Size() 
+                          << " consisting of " << image.Elements().size() << " element(s)." << std::endl;
+            } else {
+                std::cout << "\t INVALID IMAGE!" << std::endl;
+            }
+        }
         return 0;
     }
     return -1;
