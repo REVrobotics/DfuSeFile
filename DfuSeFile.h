@@ -32,6 +32,7 @@
 #include <cstring>
 #include <iostream>
 #include <fstream>
+#include <memory>
 
 namespace dfuse {
 
@@ -39,12 +40,13 @@ class DFUTarget {
 public:
     uint32_t Address() { return m_prefix.Address; }
     int Size() { return m_prefix.Size; }
+    const std::vector<uint8_t>& Data() const { return m_elements; }
 private:
     friend std::istream & operator >> (std::istream &in,  DFUTarget &obj) {
         in >> obj.m_prefix;
 
         // We will stream in the elements later, save the stream location
-        obj.m_elements.reserve(obj.m_prefix.Size);
+        obj.m_elements.resize(obj.m_prefix.Size);
         in.read((char*)obj.m_elements.data(), obj.m_prefix.Size);
 
         //in.seekg(obj.m_prefix.Size, std::ios_base::cur);
@@ -68,12 +70,40 @@ private:
     std::vector<uint8_t> m_elements;
 };
 
+namespace writer {
+
+class FileWriter {
+public:
+    FileWriter() {}
+    virtual void Write(std::ofstream& out, const DFUTarget& target) =0;
+    virtual std::unique_ptr<FileWriter> Clone() =0;
+};
+
+class BinWriter : public FileWriter {
+public:
+    BinWriter() { }
+    virtual void Write(std::ofstream& out, const DFUTarget& target) override {
+        out.write((const char*)target.Data().data(), target.Data().size());
+    }
+    virtual std::unique_ptr<FileWriter> Clone() override {return std::make_unique<BinWriter>( *this ); }
+};
+
+BinWriter Bin;
+
+} // namespace writer
+
 class DFUImage {
 public:
     int Id() { return m_prefix.AltSetting; }
     const char* Name() { return m_prefix.Name; }
     int Size() { return m_prefix.Size; }
-    const std::vector<DFUTarget>& Elements() { return m_targets; }
+    const std::vector<DFUTarget>& Elements() const { return m_targets; }
+    void Write(const std::string filename, writer::FileWriter& writer) {
+        std::ofstream outputFile(filename, std::ofstream::binary);
+        auto fw = writer.Clone();
+        fw->Write(outputFile, m_targets[0]);
+        outputFile.close();
+    }
 
     operator bool() const {return m_valid;}
     bool operator!() const {return !m_valid;}
@@ -163,6 +193,7 @@ public:
 
         // TODO: Check CRC
         m_valid = true;
+        dfuFile.close();
     };
 
     //uint32_t Write(std::string filename) {
@@ -176,7 +207,7 @@ public:
     unsigned int Vendor() { return m_suffix.Vendor; }
     unsigned int Product() { return m_suffix.Product; }
     unsigned int DeviceVersion() { return m_suffix.DeviceVersion; }
-    const std::vector<DFUImage>& Images() { return m_images; }
+    const std::vector<DFUImage>& Images() const { return m_images; }
     uint32_t Crc() { return m_suffix.Crc32; }
 
 private:

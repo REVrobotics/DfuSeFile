@@ -44,6 +44,7 @@ int main() {
                 for (auto element : image.Elements()) {
                     std::cout << "\t\t Element Address: 0x" << std::hex << element.Address() << " Size: " << element.Size() << std::endl;
                 }
+                image.Write("OutputTest.bin", dfuse::writer::Bin);
             } else {
                 std::cout << "\t INVALID IMAGE!" << std::endl;
             }
