@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 REV Robotics
+ * Copyright (c) 2019-2020 REV Robotics
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -30,8 +30,8 @@
 
 #include <iostream>
 
-int main() {
-    dfuse::DFUFile myFile("TestDFU.dfu");
+int DFUReadExample(std::string filename) {
+    dfuse::DFUFile myFile(filename.c_str());
 
     if (myFile) {
         std::cout << "Vendor: 0x" << std::hex << myFile.Vendor() << " Product: 0x" << std::hex << myFile.Product() << " Device Version: 0x" << std::hex << myFile.DeviceVersion() << std::endl;
@@ -52,4 +52,40 @@ int main() {
         return 0;
     }
     return -1;
+}
+
+int DFUWriteExample(std::string filename) {
+    /*
+    * Properties needed for a DFU File Output:
+    * 
+    * Vendor ID (16 bit)
+    * Product ID (16 bit)
+    * Version (16 bit)
+    * List of images each with:
+    *    Target Name (up to 255 characters)
+    *    Image ID (8 bit)
+    *    List of targets each with
+    *       Address (32-bit)
+    *       Size (32 bit)
+    */
+   static constexpr uint16_t vendorId = 0x0483;
+   static constexpr uint16_t productId = 0xdf11;
+   static constexpr uint16_t version = 0x1;
+
+   dfuse::DFUFile file(vendorId, productId, version);
+   dfuse::DFUImage image0(0, "Default Image");
+   dfuse::DFUTarget target0(0x8000000, "testimage1.bin");
+   dfuse::DFUTarget target1(0x800C000, "testimage2.bin");
+   dfuse::DFUTarget target2(0x803E000, 0xFF, 8 * 1024);
+   image0.AddTarget(target0);
+   image0.AddTarget(target1);
+   image0.AddTarget(target2);
+   file.AddImage(image0);
+   return file.Write(filename);
+}
+
+int main() {
+    DFUReadExample("TestDFU.dfu");
+    DFUWriteExample("TestWriteDFU.dfu");
+    return 0;
 }
