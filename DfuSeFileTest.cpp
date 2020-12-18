@@ -70,16 +70,16 @@ int DFUWriteExample(std::string filename) {
     */
    static constexpr uint16_t vendorId = 0x0483;
    static constexpr uint16_t productId = 0xdf11;
-   static constexpr uint16_t version = 0x1;
+   static constexpr uint16_t version = 0x0200;
 
    dfuse::DFUFile file(vendorId, productId, version);
-   dfuse::DFUImage image0(0, "Default Image");
+   dfuse::DFUImage image0(0, "Default Image\1Will\\Src\\DfuSeFile\\STGenerated.dfu");
    dfuse::DFUTarget target0(0x8000000, "testimage1.bin");
    dfuse::DFUTarget target1(0x800C000, "testimage2.bin");
-   dfuse::DFUTarget target2(0x803E000, 0xFF, 8 * 1024);
+   //dfuse::DFUTarget target2(0x803E000, 0xFF, 8 * 1024);
    image0.AddTarget(target0);
    image0.AddTarget(target1);
-   image0.AddTarget(target2);
+   //image0.AddTarget(target2);
    file.AddImage(image0);
    return file.Write(filename);
 }
@@ -87,5 +87,7 @@ int DFUWriteExample(std::string filename) {
 int main() {
     DFUReadExample("TestDFU.dfu");
     DFUWriteExample("TestWriteDFU.dfu");
+    DFUReadExample("TestWriteDFU.dfu");
+    //DFUReadExample("STGenerated.dfu");
     return 0;
 }
