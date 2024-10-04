@@ -98,10 +98,10 @@ public:
     const char* Name() { return m_prefix.Name; }
     int Size() { return m_prefix.Size; }
     const std::vector<DFUTarget>& Elements() const { return m_targets; }
-    void Write(const std::string filename, writer::FileWriter& writer) {
+    void Write(const std::string filename, const int elementIndex, writer::FileWriter& writer) {
         std::ofstream outputFile(filename, std::ofstream::binary);
         auto fw = writer.Clone();
-        fw->Write(outputFile, m_targets[0]);
+        fw->Write(outputFile, m_targets[elementIndex]);
         outputFile.close();
     }
 
