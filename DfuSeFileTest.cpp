@@ -31,7 +31,7 @@
 #include <iostream>
 
 int main() {
-    dfuse::DFUFile myFile("TestDFU.dfu");
+    dfuse::DFUFile myFile("..\\spark_flex.dfu");
 
     if (myFile) {
         std::cout << "Vendor: 0x" << std::hex << myFile.Vendor() << " Product: 0x" << std::hex << myFile.Product() << " Device Version: 0x" << std::hex << myFile.DeviceVersion() << std::endl;
@@ -44,7 +44,8 @@ int main() {
                 for (auto element : image.Elements()) {
                     std::cout << "\t\t Element Address: 0x" << std::hex << element.Address() << " Size: " << element.Size() << std::endl;
                 }
-                image.Write("OutputTest.bin", dfuse::writer::Bin);
+                image.Write("OutputTest0.bin", 0, dfuse::writer::Bin);
+                image.Write("OutputTest1.bin", 1, dfuse::writer::Bin);
             } else {
                 std::cout << "\t INVALID IMAGE!" << std::endl;
             }
