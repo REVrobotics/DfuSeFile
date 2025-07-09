@@ -46,6 +46,9 @@ int main() {
                 }
                 image.Write("OutputTest0.bin", 0, dfuse::writer::Bin);
                 image.Write("OutputTest1.bin", 1, dfuse::writer::Bin);
+
+                image.WriteAll("FullOutputTest0.bin");
+                image.WriteAll("FullOutputTest1.bin", 1);
             } else {
                 std::cout << "\t INVALID IMAGE!" << std::endl;
             }

@@ -26,6 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <assert.h>
 #include <cstdint>
 #include <vector>
 #include <string>
@@ -36,18 +37,18 @@
 
 namespace dfuse {
 
-class DFUTarget {
+class DFUElement {
 public:
     uint32_t Address() { return m_prefix.Address; }
     int Size() { return m_prefix.Size; }
-    const std::vector<uint8_t>& Data() const { return m_elements; }
+    const std::vector<uint8_t>& Data() const { return m_data; }
 private:
-    friend std::istream & operator >> (std::istream &in,  DFUTarget &obj) {
+    friend std::istream & operator >> (std::istream &in,  DFUElement &obj) {
         in >> obj.m_prefix;
 
         // We will stream in the elements later, save the stream location
-        obj.m_elements.resize(obj.m_prefix.Size);
-        in.read((char*)obj.m_elements.data(), obj.m_prefix.Size);
+        obj.m_data.resize(obj.m_prefix.Size);
+        in.read((char*)obj.m_data.data(), obj.m_prefix.Size);
 
         //in.seekg(obj.m_prefix.Size, std::ios_base::cur);
 
@@ -67,7 +68,7 @@ private:
         }
     };
     Prefix m_prefix;
-    std::vector<uint8_t> m_elements;
+    std::vector<uint8_t> m_data;
 };
 
 namespace writer {
@@ -75,14 +76,14 @@ namespace writer {
 class FileWriter {
 public:
     FileWriter() {}
-    virtual void Write(std::ofstream& out, const DFUTarget& target) =0;
+    virtual void Write(std::ofstream& out, const DFUElement& target) =0;
     virtual std::unique_ptr<FileWriter> Clone() =0;
 };
 
 class BinWriter : public FileWriter {
 public:
     BinWriter() { }
-    virtual void Write(std::ofstream& out, const DFUTarget& target) override {
+    virtual void Write(std::ofstream& out, const DFUElement& target) override {
         out.write((const char*)target.Data().data(), target.Data().size());
     }
     virtual std::unique_ptr<FileWriter> Clone() override {return std::make_unique<BinWriter>( *this ); }
@@ -97,12 +98,20 @@ public:
     int Id() { return m_prefix.AltSetting; }
     const char* Name() { return m_prefix.Name; }
     int Size() { return m_prefix.Size; }
-    const std::vector<DFUTarget>& Elements() const { return m_targets; }
+    const std::vector<DFUElement>& Elements() const { return m_elements; }
     void Write(const std::string filename, const int elementIndex, writer::FileWriter& writer) {
         std::ofstream outputFile(filename, std::ofstream::binary);
         auto fw = writer.Clone();
-        fw->Write(outputFile, m_targets[elementIndex]);
+        fw->Write(outputFile, m_elements[elementIndex]);
         outputFile.close();
+    }
+    void WriteAll(const std::string filename, int numElementsToSkip = 0, writer::FileWriter& writer = writer::Bin) {
+        std::ofstream outputFile(filename, std::ofstream::binary);
+        auto fw = writer.Clone();
+        for (int i = numElementsToSkip; i < m_elements.size(); i++) {
+            outputFile.seekp(m_elements[i].Address() - m_elements[0].Address(), std::ios_base::beg);
+            fw->Write(outputFile, m_elements[i]);
+        }
     }
 
     operator bool() const {return m_valid;}
@@ -117,9 +126,9 @@ private:
             return in;
         }
 
-        obj.m_targets.resize(obj.m_prefix.Elements);
+        obj.m_elements.resize(obj.m_prefix.Elements);
         
-        for (DFUTarget& target : obj.m_targets) {
+        for (DFUElement& target : obj.m_elements) {
             in >> target;
             if (!in) {
                 return in;
@@ -158,7 +167,7 @@ private:
         }
     };
     Prefix m_prefix;
-    std::vector<DFUTarget> m_targets;
+    std::vector<DFUElement> m_elements;
     bool m_valid;
 };
 
@@ -180,6 +189,9 @@ public:
             return;
         }
         m_images.resize(m_prefix.Targets);
+
+        // only support one target for now
+        assert(m_prefix.Targets == 1);
 
         for (DFUImage& image : m_images) {
             dfuFile >> image;
