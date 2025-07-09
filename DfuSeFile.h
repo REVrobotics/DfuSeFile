@@ -40,7 +40,7 @@ namespace dfuse {
 class DFUElement {
 public:
     uint32_t Address() { return m_prefix.Address; }
-    int Size() { return m_prefix.Size; }
+    int Size() const { return m_prefix.Size; }
     const std::vector<uint8_t>& Data() const { return m_data; }
 private:
     friend std::istream & operator >> (std::istream &in,  DFUElement &obj) {
@@ -84,7 +84,7 @@ class BinWriter : public FileWriter {
 public:
     BinWriter() { }
     virtual void Write(std::ofstream& out, const DFUElement& target) override {
-        out.write((const char*)target.Data().data(), target.Data().size());
+        out.write((const char*)target.Data().data(), target.Size());
     }
     virtual std::unique_ptr<FileWriter> Clone() override {return std::make_unique<BinWriter>( *this ); }
 };
@@ -99,14 +99,35 @@ public:
     const char* Name() { return m_prefix.Name; }
     int Size() { return m_prefix.Size; }
     const std::vector<DFUElement>& Elements() const { return m_elements; }
+    unsigned int ElementsSize(int numElementsToSkip = 0) const {
+        if (m_elements.empty()) {
+            return 0;
+        }
+        if (numElementsToSkip >= m_elements.size()) {
+            return 0;
+        }
+
+        uint32_t size = 0;
+        DFUElement first = m_elements[numElementsToSkip];
+        DFUElement last = m_elements[m_elements.size() - 1];
+
+        size = last.Address() + last.Size() - first.Address();
+        return size;
+    }
     void Write(const std::string filename, const int elementIndex, writer::FileWriter& writer) {
+        std::remove(filename.c_str());
         std::ofstream outputFile(filename, std::ofstream::binary);
         auto fw = writer.Clone();
         fw->Write(outputFile, m_elements[elementIndex]);
         outputFile.close();
     }
     void WriteAll(const std::string filename, int numElementsToSkip = 0, writer::FileWriter& writer = writer::Bin) {
+        remove(filename.c_str());
         std::ofstream outputFile(filename, std::ofstream::binary);
+        if (!outputFile) {
+            std::cerr << "Failed to open file for writing: " << filename << std::endl;
+            return;
+        }
         auto fw = writer.Clone();
         for (int i = numElementsToSkip; i < m_elements.size(); i++) {
             outputFile.seekp(m_elements[i].Address() - m_elements[0].Address(), std::ios_base::beg);
