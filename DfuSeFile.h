@@ -122,7 +122,7 @@ public:
         outputFile.close();
     }
     void WriteAll(const std::string filename, int numElementsToSkip = 0, writer::FileWriter& writer = writer::Bin) {
-        remove(filename.c_str());
+        std::remove(filename.c_str());
         std::ofstream outputFile(filename, std::ofstream::binary);
         if (!outputFile) {
             std::cerr << "Failed to open file for writing: " << filename << std::endl;
