@@ -130,7 +130,7 @@ public:
         }
         auto fw = writer.Clone();
         for (int i = numElementsToSkip; i < m_elements.size(); i++) {
-            outputFile.seekp(m_elements[i].Address() - m_elements[0].Address(), std::ios_base::beg);
+            outputFile.seekp(m_elements[i].Address() - m_elements[numElementsToSkip].Address(), std::ios_base::beg);
             fw->Write(outputFile, m_elements[i]);
         }
     }
